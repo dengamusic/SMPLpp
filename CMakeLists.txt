@@ -1,96 +1,39 @@
-##
-## CMAKE VERSION
-##
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
-##
-## PROJECT NAME
-##
-project(SMPL++)
+project(SMPLXX LANGUAGES CXX)
 
-##
-## COMPILER SETTINGS
-##
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-##
-## PACKAGES
-##
+# ─── xtensor ───────────────────────────────────────────────────────────
+if(TARGET xtensor)
+    message(STATUS "xtensor target already provided by parent – skipping find_package")
+    get_target_property(_XTENSOR_INC xtensor INTERFACE_INCLUDE_DIRECTORIES)
+else()
+    find_package(xtensor REQUIRED)
+    get_target_property(_XTENSOR_INC xtensor INTERFACE_INCLUDE_DIRECTORIES)
+endif()
 
-# xtensor
-find_package(xtensor REQUIRED)
-
-# json
+# ─── other deps ─────────────────────────────────────────────────────────
 find_package(nlohmann_json REQUIRED)
-
-# Torch
 find_package(Torch REQUIRED)
 
-##
-## GATHER FILES
-##
-file(GLOB HEADER
-    "SMPL++/include/*.h"
-    "SMPL++/include/*.hpp"
-    "SMPL++/include/definition/*.h"
-    "SMPL++/include/definition/*.hpp"
-    "SMPL++/include/toolbox/*.h"
-    "SMPL++/include/toolbox/*.hpp"
-    "SMPL++/include/smpl/*.h"
-    "SMPL++/include/smpl/*.hpp"
+# ─── sources ────────────────────────────────────────────────────────────
+file(GLOB_RECURSE HEADER "SMPL++/include/*.h"  "SMPL++/include/*.hpp")
+file(GLOB_RECURSE SOURCE "SMPL++/src/*.c"      "SMPL++/src/*.cpp")
+
+# ─── library target ─────────────────────────────────────────────────────
+add_library(smplpp STATIC ${HEADER} ${SOURCE})
+
+target_include_directories(smplpp PUBLIC
+    SMPL++/include
+    ${_XTENSOR_INC}
 )
 
-file(GLOB SOURCE
-    "SMPL++/src/*.c"
-    "SMPL++/src/*.cpp"
-    "SMPL++/src/definition/*.c"
-    "SMPL++/src/definition/*.cpp"
-    "SMPL++/src/toolbox/*.c"
-    "SMPL++/src/toolbox/*.cpp"
-    "SMPL++/src/smpl/*.c"
-    "SMPL++/src/smpl/*.cpp"
-)
-
-##
-## INCLUDE DIRECTORIES
-##
-set(SMPLXX_INCLUDE_DIRS
-    "SMPL++/include"
-)
-
-set(PROJECT_INCLUDE_DIRS
-    ${SMPLXX_INCLUDE_DIRS}
-    ${GLEW_INCLUDE_DIRS}
-    ${xtensor_INCLUDE_DIRS}
-    ${TORCH_INCLUDE_DIRS}
-)
-
-# message("----- Include Paths -----")
-# message("SMPL++: ${SMPLXX_INCLUDE_DIRS}")
-# message("xtensor: ${xtensor_INCLUDE_DIRS}")
-# message("Torch: ${TORCH_INCLUDE_DIRS}")
-# message("-------------------------------")
-
-##
-## LIBRARIES
-##
-set(PROJECT_LIBRARIES
+target_link_libraries(smplpp PUBLIC
     xtensor
-    ${xtensor_blas_LIBRARIES}
     nlohmann_json::nlohmann_json
     ${TORCH_LIBRARIES}
-    stdc++fs                        # std::experimental::filesystem
+    stdc++fs
 )
-
-# message("----- Libraries Paths -----")
-# message("Torch: ${TORCH_LIBRARIES}")
-# message("-------------------------------")
-
-##
-## OUTPUTS
-##
-add_executable(smplpp ${HEADER} ${SOURCE})
-target_include_directories(smplpp PRIVATE ${PROJECT_INCLUDE_DIRS})
-target_link_libraries(smplpp ${PROJECT_LIBRARIES})
