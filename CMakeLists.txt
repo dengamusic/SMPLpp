@@ -29,11 +29,11 @@ add_library(smplpp STATIC ${HEADER} ${SOURCE})
 target_include_directories(smplpp PUBLIC
     SMPL++/include
     ${_XTENSOR_INC}
+    ${TORCH_INCLUDE_DIRS}                     # add Torch headers
 )
 
 target_link_libraries(smplpp PUBLIC
     xtensor
     nlohmann_json::nlohmann_json
-    ${TORCH_LIBRARIES}
-    stdc++fs
+    ${TORCH_LIBRARIES}                        # link Torch libs
 )
